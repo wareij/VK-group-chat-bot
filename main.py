@@ -20,6 +20,17 @@ with open('vk-group-chat-bot/bot_config.json', encoding='utf-8') as f:
 def sender(id, text):
     vk_session.method('messages.send', {'chat_id' : id, 'message' : text, 'random_id' : get_random_id()})
 
+def tuner(temp):
+    for key, value in temp.items():
+        int_value = round(value)
+        if int_value > 0:
+            temp[key] = '+' + str(int_value)
+        elif value == 0:
+            temp[key] = ' ' + str(int_value)
+        else:
+            temp[key] = str(int_value)            
+    return temp
+
 # Запрос погоды через API, парсинг ответа и отправка данных в чат
 # !!!Перенос строки невозможнен по причине смещения текста на мобильных устройствах!!!
 def send_weather():
@@ -27,12 +38,14 @@ def send_weather():
     weather = weather_pack['daily'][0]
     indent = '&#12288;'
     alerts = ''
+    temp = tuner(weather['temp'])
+    feels_temp = tuner(weather['feels_like'])
     for alert in weather_pack['alerts']:
         if alert['description'] != '':
-            alerts += alert['description'] + '&#10071; '      
-    sender(2, f"Утро{indent}День{indent}Вечер{indent}Ночь\n{indent}\n{round(weather['temp']['morn'])}{indent}{indent}{indent}{round(weather['temp']['day'])}{indent}{indent}{indent}{round(weather['temp']['eve'])}{indent}{indent}{indent}{round(weather['temp']['night'])}\n{indent}\n{round(weather['feels_like']['morn'])}{indent}{indent}{indent}{round(weather['feels_like']['day'])}{indent}{indent}{indent}{round(weather['feels_like']['eve'])}{indent}{indent}{indent}{round(weather['feels_like']['night'])}\n{indent}\nВетер: {round(weather['wind_speed'], 1)}м/с{indent}Порывы: {round(weather['wind_gust'], 1)}м/с\n{(weather['weather'][0]['description']).capitalize()}\n{alerts}")
-
-# Создание расписания отправки погоды
+            alerts += alert['description'] + '&#10071; '                  
+    sender(2, f"Утро{indent}День{indent}Вечер{indent}Ночь\n{indent}\n{temp['morn']}{indent}{indent}{indent}{temp['day']}{indent}{indent}{indent}{temp['eve']}{indent}{indent}{indent}{temp['night']}\n{indent}\n{feels_temp['morn']}{indent}{indent}{indent}{feels_temp['day']}{indent}{indent}{indent}{feels_temp['eve']}{indent}{indent}{indent}{feels_temp['night']}\n{indent}\nВетер: {round(weather['wind_speed'], 1)}м/с{indent}Порывы: {round(weather['wind_gust'], 1)}м/с\n{(weather['weather'][0]['description']).capitalize()}\n{alerts}")  
+        
+        # Создание расписания отправки погоды
 def create_schedule():
     schedule.every().minute.do(send_weather)
     while True:
