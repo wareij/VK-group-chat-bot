@@ -13,13 +13,18 @@ from config import VK_TOKEN, WEATHER_TOKEN
 vk_session = vk_api.VkApi(token=VK_TOKEN)
 longpoll = VkBotLongPoll(vk_session, group_id=208511320)
 
+
 with open('vk-group-chat-bot/bot_config.json', encoding='utf-8') as f:
     bot_config = json.load(f)
 
 # Функция отправления сообщений в чат
 def sender(id, text):
-    vk_session.method('messages.send', {'chat_id' : id, 'message' : text, 'random_id' : get_random_id()})
-
+    msg_id = abs(get_random_id())
+    # Ответом на данный метод должно возвращаться id сообщения, он же его обнуляет -_-
+    vk_session.method('messages.send', {'peer_id' : (2000000000 + id), 'message' : text, 'random_id' : msg_id})
+    return msg_id 
+    
+# Обработчик для читабельного вывода погоды
 def tuner(temp):
     for key, value in temp.items():
         int_value = round(value)
@@ -43,11 +48,12 @@ def send_weather():
     for alert in weather_pack['alerts']:
         if alert['description'] != '':
             alerts += alert['description'] + '&#10071; '                  
-    sender(2, f"Утро{indent}День{indent}Вечер{indent}Ночь\n{indent}\n{temp['morn']}{indent}{indent}{indent}{temp['day']}{indent}{indent}{indent}{temp['eve']}{indent}{indent}{indent}{temp['night']}\n{indent}\n{feels_temp['morn']}{indent}{indent}{indent}{feels_temp['day']}{indent}{indent}{indent}{feels_temp['eve']}{indent}{indent}{indent}{feels_temp['night']}\n{indent}\nВетер: {round(weather['wind_speed'], 1)}м/с{indent}Порывы: {round(weather['wind_gust'], 1)}м/с\n{(weather['weather'][0]['description']).capitalize()}\n{alerts}")  
-        
-        # Создание расписания отправки погоды
+    msg_id = sender(2, f"Утро{indent}День{indent}Вечер{indent}Ночь\n{indent}\n{temp['morn']}{indent}{indent}{indent}{temp['day']}{indent}{indent}{indent}{temp['eve']}{indent}{indent}{indent}{temp['night']}\n{indent}\n{feels_temp['morn']}{indent}{indent}{indent}{feels_temp['day']}{indent}{indent}{indent}{feels_temp['eve']}{indent}{indent}{indent}{feels_temp['night']}\n{indent}\nВетер: {round(weather['wind_speed'], 1)}м/с{indent}Порывы: {round(weather['wind_gust'], 1)}м/с\n{(weather['weather'][0]['description']).capitalize()}\n{alerts}")
+    return msg_id
+
+# Создание расписания отправки погоды
 def create_schedule():
-    schedule.every().minute.do(send_weather)
+    schedule.every().day.do(send_weather)
     while True:
         schedule.run_pending()
         time.sleep(1)
@@ -65,11 +71,14 @@ def get_message(message):
 # После активации, управление передается в функцию bot, после чего цикл завершается
 def start_bot():
     for event in longpoll.listen():
-        print('проверка 1')
         if event.type == VkBotEventType.MESSAGE_NEW and event.from_chat and event.message.get('text') !='':      
             id = event.chat_id
             bot_response = event.message.get('text').lower()
-            if bot_response == 'bot':
+            if bot_response == 'weather':
+                msg_id = send_weather()
+                # Неработающая хренатень
+                #vk_session.method('messages.pin', {'peer_id' : 2000000002, 'message_id' : msg_id})            
+            elif bot_response == 'bot':
                 sender(id, '(╮°-°)╮┳━━┳')
                 bot()  
                 break     
@@ -78,7 +87,6 @@ def start_bot():
 # Ожидание команды дезактивации, после которой управление переходит в функцию start_bot
 def bot():
     for event in longpoll.listen():
-        print('проверка 2')
         if event.type == VkBotEventType.MESSAGE_NEW and event.from_chat and event.message.get('text') !='':      
             id = event.chat_id
             msg = event.message.get('text').lower()
