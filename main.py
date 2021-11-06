@@ -19,9 +19,12 @@ with open('vk-group-chat-bot/bot_config.json', encoding='utf-8') as f:
 def sender(id, text):
     vk_session.method('messages.send', {'chat_id' : id, 'message' : text, 'random_id' : get_random_id()})
 
+# Запрос погоды через API, парсинг ответа и отправка данных в чат
 def send_weather():
+    #weather = (requests.get(f'https://api.openweathermap.org/data/2.5/onecall?lat=53&lon=50&units=metric&lang=ru&exclude=current,minutely,hourly,alerts&appid={WEATHER_TOKEN}')).json()
     print('я живой!')
 
+# Создание расписания отправки погоды
 def create_schedule():
     schedule.every().minute.do(send_weather)
     while True:
@@ -38,7 +41,7 @@ def get_message(message):
         return random.choice(bot_config['failure_phrases'])
 
 # Прослушивание чата в бесконечном цикле, в ожидании команды активации
-# После активации, управление передается в функцию main, после чего цикл завершается
+# После активации, управление передается в функцию bot, после чего цикл завершается
 def start_bot():
     for event in longpoll.listen():
         print('проверка 1')
