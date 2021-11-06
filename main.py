@@ -47,12 +47,12 @@ def start_bot():
             bot_response = event.message.get('text').lower()
             if bot_response == 'bot':
                 sender(id, '(╮°-°)╮┳━━┳')
-                main()  
+                bot()  
                 break     
 
 # Обработка сообщений пользователей и отправда ответов в чат
 # Ожидание команды дезактивации, после которой управление переходит в функцию start_bot
-def main():
+def bot():
     for event in longpoll.listen():
         print('проверка 2')
         if event.type == VkBotEventType.MESSAGE_NEW and event.from_chat and event.message.get('text') !='':      
@@ -66,9 +66,12 @@ def main():
                 start_bot()
                 break
 
-if __name__ == '__main__':
+def main():
     thread_one = Thread(target=create_schedule)
     thread_one.start()
     start_bot()    
     thread_one.join()      
+
+if __name__ == '__main__':
+    main()    
 
