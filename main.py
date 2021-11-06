@@ -5,6 +5,7 @@ import json
 import random
 import schedule
 import time
+import requests
 from threading import *
 from config import VK_TOKEN, WEATHER_TOKEN
 
@@ -20,9 +21,16 @@ def sender(id, text):
     vk_session.method('messages.send', {'chat_id' : id, 'message' : text, 'random_id' : get_random_id()})
 
 # Запрос погоды через API, парсинг ответа и отправка данных в чат
+# !!!Перенос строки невозможнен по причине смещения текста на мобильных устройствах!!!
 def send_weather():
-    #weather = (requests.get(f'https://api.openweathermap.org/data/2.5/onecall?lat=53&lon=50&units=metric&lang=ru&exclude=current,minutely,hourly,alerts&appid={WEATHER_TOKEN}')).json()
-    print('я живой!')
+    weather_pack = (requests.get(f'https://api.openweathermap.org/data/2.5/onecall?lat=53&lon=50&units=metric&lang=ru&exclude=current,minutely,hourly&appid={WEATHER_TOKEN}')).json()
+    weather = weather_pack['daily'][0]
+    indent = '&#12288;'
+    alerts = ''
+    for alert in weather_pack['alerts']:
+        if alert['description'] != '':
+            alerts += alert['description'] + '&#10071; '      
+    sender(2, f"Утро{indent}День{indent}Вечер{indent}Ночь\n{indent}\n{round(weather['temp']['morn'])}{indent}{indent}{indent}{round(weather['temp']['day'])}{indent}{indent}{indent}{round(weather['temp']['eve'])}{indent}{indent}{indent}{round(weather['temp']['night'])}\n{indent}\n{round(weather['feels_like']['morn'])}{indent}{indent}{indent}{round(weather['feels_like']['day'])}{indent}{indent}{indent}{round(weather['feels_like']['eve'])}{indent}{indent}{indent}{round(weather['feels_like']['night'])}\n{indent}\nВетер: {round(weather['wind_speed'], 1)}м/с{indent}Порывы: {round(weather['wind_gust'], 1)}м/с\n{(weather['weather'][0]['description']).capitalize()}\n{alerts}")
 
 # Создание расписания отправки погоды
 def create_schedule():
@@ -46,7 +54,7 @@ def start_bot():
     for event in longpoll.listen():
         print('проверка 1')
         if event.type == VkBotEventType.MESSAGE_NEW and event.from_chat and event.message.get('text') !='':      
-            id = event.chat_id  
+            id = event.chat_id
             bot_response = event.message.get('text').lower()
             if bot_response == 'bot':
                 sender(id, '(╮°-°)╮┳━━┳')
