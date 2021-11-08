@@ -8,6 +8,7 @@ import time
 import requests
 from threading import *
 from config import VK_TOKEN, WEATHER_TOKEN
+from news_parser import News
 
 
 vk_session = vk_api.VkApi(token=VK_TOKEN)
@@ -47,13 +48,14 @@ def send_weather():
     feels_temp = tuner(weather['feels_like'])
     for alert in weather_pack['alerts']:
         if alert['description'] != '':
-            alerts += alert['description'] + '&#10071; '                  
+            alerts += alert['description'] + '&#10071; '  
+    sender(2, 'Доброе утро!')                
     msg_id = sender(2, f"Утро{indent}День{indent}Вечер{indent}Ночь\n{indent}\n{temp['morn']}{indent}{indent}{indent}{temp['day']}{indent}{indent}{indent}{temp['eve']}{indent}{indent}{indent}{temp['night']}\n{indent}\n{feels_temp['morn']}{indent}{indent}{indent}{feels_temp['day']}{indent}{indent}{indent}{feels_temp['eve']}{indent}{indent}{indent}{feels_temp['night']}\n{indent}\nВетер: {round(weather['wind_speed'], 1)}м/с{indent}Порывы: {round(weather['wind_gust'], 1)}м/с\n{(weather['weather'][0]['description']).capitalize()}\n{alerts}")
     return msg_id
 
 # Создание расписания отправки погоды
 def create_schedule():
-    schedule.every().day.do(send_weather)
+    schedule.every().day.at('06:00').do(send_weather)
     while True:
         schedule.run_pending()
         time.sleep(1)
@@ -77,7 +79,9 @@ def start_bot():
             if bot_response == 'weather':
                 msg_id = send_weather()
                 # Неработающая хренатень
-                #vk_session.method('messages.pin', {'peer_id' : 2000000002, 'message_id' : msg_id})            
+                #vk_session.method('messages.pin', {'peer_id' : 2000000002, 'message_id' : msg_id})   
+            elif bot_response == 'news':
+                sender(id, News().post)
             elif bot_response == 'bot':
                 sender(id, '(╮°-°)╮┳━━┳')
                 bot()  
