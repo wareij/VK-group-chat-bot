@@ -21,7 +21,6 @@ with open('vk-group-chat-bot/bot_config.json', encoding='utf-8') as f:
 # Функция отправления сообщений в чат
 def sender(id, text):
     msg_id = abs(get_random_id())
-    # Ответом на данный метод должно возвращаться id сообщения, он же его обнуляет -_-
     vk_session.method('messages.send', {'peer_id' : (2000000000 + id), 'message' : text, 'random_id' : msg_id})
     return msg_id 
     
@@ -76,10 +75,7 @@ def start_bot():
         if event.type == VkBotEventType.MESSAGE_NEW and event.from_chat and event.message.get('text') !='':      
             id = event.chat_id
             bot_response = event.message.get('text').lower()
-            if bot_response == 'weather':
-                msg_id = send_weather()
-                # Неработающая хренатень
-                #vk_session.method('messages.pin', {'peer_id' : 2000000002, 'message_id' : msg_id})   
+            if bot_response == 'weather':send_weather()  
             elif bot_response == 'news':
                 sender(id, News().post)
             elif bot_response == 'bot':
